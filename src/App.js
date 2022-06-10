@@ -1,4 +1,5 @@
 import React, {useEffect, useState } from "react";
+import axios from "axios"
 
 function App() {
 
@@ -11,37 +12,29 @@ function App() {
   },[]);
 
   const actualizar = async () => {
-    const res = await fetch("http://localhost:8080/Libros",
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-      }
-    );
-    const data = await res.json();
-    setLista(data);
+    const res = axios.get("http://localhost:8080/Libros")
+    .then(res => {
+      const data = res.data;
+      setLista(data);
+    });
   }
 
   const borrarLibro = async (id) => {
-    const res = await fetch("http://localhost:8080/Libro/"+id,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'mode': 'no-cors',
-        },
-        method: "delete",
-      }
-    );
-    const data = await res.json();
-    setRespuesta(data);
+    const res = axios.delete("http://localhost:8080/Libro/"+id,{ crossdomain: true })
+    .then(res => {
+      const data = res.data;
+      setRespuesta(data)
+    });
   }
 
   return (
     <div>
+      {/*
       <p> { JSON.stringify(lista) } </p>
       <p> { JSON.stringify(auxiliar) } </p>
       <p> { JSON.stringify(respuesta) } </p>
+      */
+      }
       <nav className="navbar navbar-expand-lg bg-dark">
         <div className="container d-flex justify-content-end">
           <button onClick={() => actualizar()} className="btn btn-primary ms-1">
@@ -93,7 +86,7 @@ function App() {
                 </div>
               </td>
             </tr>
-            {
+            { 
               lista.map( (item) => {
                 return (
                   <tr key={item.id}>
@@ -121,7 +114,7 @@ function App() {
                     </td>
                   </tr>
                 )
-              }) 
+              })
             }
           </tbody>
         </table>
@@ -202,7 +195,7 @@ function App() {
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-primary">Guardar</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal">Guardar</button>
             </div>
           </div>
         </div>
@@ -221,7 +214,12 @@ function App() {
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-danger" onClick={() => borrarLibro(auxiliar.id)}>Eliminar</button>
+              <button type="button" className="btn btn-danger" onClick={() => {
+                  borrarLibro(auxiliar.id)
+                  setAuxiliar(null);
+                }
+                } 
+                data-bs-dismiss="modal">Eliminar</button>
             </div>
           </div>
         </div>
@@ -302,7 +300,7 @@ function App() {
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-primary">Guardar</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal">Guardar</button>
             </div>
           </div>
         </div>

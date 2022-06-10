@@ -1,6 +1,19 @@
 import React, {useEffect, useState } from "react";
 import axios from "axios"
 
+class Libro{
+  constructor(id, titulo, editorial, genero, autor, idioma, publicacion, edicion){
+    this.id = id;
+    this.titulo = titulo;
+    this.editorial = editorial; 
+    this.genero = genero; 
+    this.autor = autor;
+    this.idioma = idioma;
+    this.publicacion = publicacion; 
+    this.edicion = edicion;
+  }
+}
+
 function App() {
 
   const [lista,setLista] = useState([]);
@@ -12,7 +25,7 @@ function App() {
   },[]);
 
   const actualizar = async () => {
-    const res = axios.get("http://localhost:8080/Libros")
+    const res = await axios.get("http://localhost:8080/Libros")
     .then(res => {
       const data = res.data;
       setLista(data);
@@ -20,7 +33,31 @@ function App() {
   }
 
   const borrarLibro = async (id) => {
-    const res = axios.delete("http://localhost:8080/Libro/"+id,{ crossdomain: true })
+    const res = await axios.delete("http://localhost:8080/Libro/"+id,{ crossdomain: true })
+    .then(res => {
+      const data = res.data;
+      setRespuesta(data)
+    });
+  }
+
+  const consultarLibro = async (id) => {
+    const res = await axios.get("http://localhost:8080/Libro/"+id,{ crossdomain: true })
+    .then(res => {
+      const data = res.data;
+      setAuxiliar(data)
+    });
+  }
+
+  const crearLibro = async (libro) => {
+    const res = await axios.post("http://localhost:8080/Libro",libro,{ crossdomain: true })
+    .then(res => {
+      const data = res.data;
+      setRespuesta(data)
+    });
+  }
+
+  const modificarLibro = async (libro) => {
+    const res = await axios.post("http://localhost:8080/Libro/"+libro.id,libro,{ crossdomain: true })
     .then(res => {
       const data = res.data;
       setRespuesta(data)
@@ -29,18 +66,17 @@ function App() {
 
   return (
     <div>
-      {/*
       <p> { JSON.stringify(lista) } </p>
       <p> { JSON.stringify(auxiliar) } </p>
       <p> { JSON.stringify(respuesta) } </p>
-      */
-      }
       <nav className="navbar navbar-expand-lg bg-dark">
         <div className="container d-flex justify-content-end">
           <button onClick={() => actualizar()} className="btn btn-primary ms-1">
             <i className="bi bi-plus-circle-fill"></i> Actualizar
           </button>
-          <button className="btn btn-primary ms-1" data-bs-toggle="modal" data-bs-target="#insertar">
+          <button className="btn btn-primary ms-1" data-bs-toggle="modal" data-bs-target="#insertar" onClick={() => {
+            setAuxiliar(new Libro());
+          }}>
             <i className="bi bi-plus-circle-fill"></i> Agregar Libro
           </button>
           <button className="btn btn-danger ms-1" data-bs-toggle="modal" data-bs-target="#eliminar">
@@ -102,7 +138,9 @@ function App() {
                     <td scope="col">{item.edicion}</td>
                     <td scope="col">
                       <div className="d-flex justify-content-center">
-                        <button className="btn btn-warning ms-1" data-bs-toggle="modal" data-bs-target="#modificar">
+                        <button className="btn btn-warning ms-1" data-bs-toggle="modal" data-bs-target="#modificar" onClick={() => { 
+                            consultarLibro(item.id);
+                          }}>
                           <i className="bi bi-pencil-fill"></i> .
                         </button>
                         <button data-bs-toggle="modal" data-bs-target="#eliminar" className="btn btn-danger ms-1" onClick={() => { 
@@ -195,7 +233,11 @@ function App() {
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal">Guardar</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => {
+                crearLibro(auxiliar);
+              }}>
+                Guardar
+              </button>
             </div>
           </div>
         </div>
@@ -300,7 +342,11 @@ function App() {
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal">Guardar</button>
+              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => {
+                modificarLibro(auxiliar);
+              }}>
+                Guardar
+              </button>
             </div>
           </div>
         </div>

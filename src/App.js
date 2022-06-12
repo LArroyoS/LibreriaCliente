@@ -1,8 +1,52 @@
-import React, {useEffect, useState } from "react";
-import axios from "axios"
+import React, { useEffect, useState } from "react";
+
+//bootstrap
+import 'bootstrap/dist/css/bootstrap.css';
+import { 
+  BsPlusCircle,
+  BsTrashFill,
+  BsArrowClockwise,
+  BsFillXCircleFill,
+  BsFillPencilFill,
+  BsCircle,
+  BsCircleFill,
+  BsXCircleFill,
+  BsDashCircle
+} from "react-icons/bs";
+import {
+  Navbar,
+  NavbarBrand,
+  NavItem,
+  Table ,
+  Button,
+  Col, 
+  Row, 
+  Form, 
+  FormGroup, 
+  Label, 
+  Input,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ListGroup,
+  ListGroupItem,
+  ListGroupItemHeading,
+  Collapse
+} from 'reactstrap';
+//axios(Peticiones)
+import axios from "axios";
 
 class Libro{
-  constructor(id, titulo, editorial, genero, autor, idioma, publicacion, edicion){
+  constructor(
+      id = 0, 
+      titulo = "",
+      editorial = "", 
+      genero = 0, 
+      autor = "", 
+      idioma = 0, 
+      publicacion = null, 
+      edicion = 0){
     this.id = id;
     this.titulo = titulo;
     this.editorial = editorial; 
@@ -16,8 +60,22 @@ class Libro{
 
 function App() {
 
+  const [modal, setModal] = useState(0);
+  const toggle = (id) => setModal((id==modal)? 0:id);
+
+  const [listLibros, setListLibros] = useState(0);
+  const toggleLibros = (index) => {
+    setListLibros((index==listLibros)? 0:index);
+  }
+
+  const [libros, setLibros] = useState([]);
+  const [libro, setLibro] = useState(new Libro());
+
+  const [seleccionar, setSeleccionar] = useState([]);
+  
+  const [buscar,setBuscar] = useState("");
   const [lista,setLista] = useState([]);
-  const [auxiliar,setAuxiliar] = useState(null);
+
   const [respuesta,setRespuesta] = useState([]);
 
   useEffect(() => {
@@ -32,8 +90,37 @@ function App() {
     });
   }
 
+  const onChange = (i,target) => {
+    const { name, value } = target;
+    setLibros(libros.map((item,index) => {
+      if(i==index){
+        return {
+          ...item,
+          [name]: value
+        }
+      }
+      return item;
+    }));
+  }
+
+  const onChangeEdit = (target) => {
+    const { name, value } = target;
+    setLibro({
+      ...libro,
+      [name]: value
+    })
+  }
+
   const borrarLibro = async (id) => {
     const res = await axios.delete("http://localhost:8080/Libro/"+id,{ crossdomain: true })
+    .then(res => {
+      const data = res.data;
+      setRespuesta(data)
+    });
+  }
+
+  const borrarLibros = async (seleccionar) => {
+    const res = await axios.post("http://localhost:8080/Libros/Eliminar",seleccionar,{ crossdomain: true })
     .then(res => {
       const data = res.data;
       setRespuesta(data)
@@ -44,12 +131,12 @@ function App() {
     const res = await axios.get("http://localhost:8080/Libro/"+id,{ crossdomain: true })
     .then(res => {
       const data = res.data;
-      setAuxiliar(data)
+      setLibro(data)
     });
   }
 
-  const crearLibro = async (libro) => {
-    const res = await axios.post("http://localhost:8080/Libro",libro,{ crossdomain: true })
+  const crearLibros = async (libros) => {
+    const res = await axios.post("http://localhost:8080/Libros",libros,{ crossdomain: true })
     .then(res => {
       const data = res.data;
       setRespuesta(data)
@@ -57,7 +144,8 @@ function App() {
   }
 
   const modificarLibro = async (libro) => {
-    const res = await axios.post("http://localhost:8080/Libro/"+libro.id,libro,{ crossdomain: true })
+    alert(libro.id)
+    const res = await axios.patch("http://localhost:8080/Libro/"+libro.id,libro,{ crossdomain: true })
     .then(res => {
       const data = res.data;
       setRespuesta(data)
@@ -66,293 +154,267 @@ function App() {
 
   return (
     <div>
-      <p> { JSON.stringify(lista) } </p>
-      <p> { JSON.stringify(auxiliar) } </p>
-      <p> { JSON.stringify(respuesta) } </p>
-      <nav className="navbar navbar-expand-lg bg-dark">
-        <div className="container d-flex justify-content-end">
-          <button onClick={() => actualizar()} className="btn btn-primary ms-1">
-            <i className="bi bi-plus-circle-fill"></i> Actualizar
-          </button>
-          <button className="btn btn-primary ms-1" data-bs-toggle="modal" data-bs-target="#insertar" onClick={() => {
-            setAuxiliar(new Libro());
-          }}>
-            <i className="bi bi-plus-circle-fill"></i> Agregar Libro
-          </button>
-          <button className="btn btn-danger ms-1" data-bs-toggle="modal" data-bs-target="#eliminar">
-            <i className="bi bi-dash-circle-fill"></i> Eliminar Libro
-          </button>
-        </div>
-      </nav>
-      <div className="container">
-        <table className="table table-hover hover-primary">
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Titulo</th>
-              <th scope="col">Editorial</th>
-              <th scope="col">Edicion</th>
-              <th scope="col">Genero</th>
-              <th scope="col">Autor</th>
-              <th scope="col">Idioma</th>
-              <th scope="col">Publicación</th>
-              <th scope="col">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td scope="row">
-                <span className="circulo"></span>
-              </td>
-              <td scope="col">Titulo</td>
-              <td scope="col">Editorial</td>
-              <td scope="col">Edicion</td>
-              <td scope="col">Genero</td>
-              <td scope="col">Autor</td>
-              <td scope="col">Idioma</td>
-              <td scope="col">Publicación</td>
-              <td scope="col">
-                <div className="d-flex justify-content-center">
-                  <button className="btn btn-warning ms-1" data-bs-toggle="modal" data-bs-target="#modificar">
-                    <i className="bi bi-pencil-fill"></i> .
-                  </button>
-                  <button className="btn btn-danger ms-1" data-bs-toggle="modal" data-bs-target="#eliminar">
-                    <i className="bi bi-trash-fill"></i> .
-                  </button>
-                </div>
-              </td>
-            </tr>
-            { 
-              lista.map( (item) => {
+      <Navbar color="dark" dark expand="md">
+        <NavbarBrand><h2>Libros</h2></NavbarBrand>
+        <Navbar>
+          <NavItem>
+            <Input type="text" name="buscar" id="buscar" value={buscar} onChange={({target}) => setBuscar(target.value) } placeholder="Buscar" />
+          </NavItem>
+          <NavItem>
+            <Button color="info" onClick={actualizar}><BsArrowClockwise/></Button>
+          </NavItem>
+          <NavItem>
+            <Button color="success" onClick={() => toggle(1)}><BsPlusCircle/></Button>
+          </NavItem>
+          <NavItem>
+            <Button color="danger" onClick={() => toggle(4)}><BsTrashFill/></Button>
+          </NavItem>
+        </Navbar>
+      </Navbar>
+      <Table hover>
+        <thead>
+          <tr>
+            <th onClick={() => {
+              if(seleccionar.length==lista.length){
+                setSeleccionar([]);
+              }
+              else{
+                setSeleccionar(
+                  lista.map((item) => { return item.id })
+                )
+              }
+            }}>
+              { (seleccionar.length==lista.length)? <BsCircleFill/>:<BsCircle/> }</th>
+            <th>Titulo</th>
+            <th>Editorial</th>
+            <th>Edicion</th>
+            <th>Genero</th>
+            <th>Autor</th>
+            <th>Idioma</th>
+            <th>Publicación</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+        { 
+          lista.map( (item) => {
+            if(buscar==""){
+              return (
+                <tr key={item.id}>
+                  <td onClick={() => {
+                    if(seleccionar.includes(item.id)){
+                      setSeleccionar(
+                        seleccionar.filter((dato) => dato!=item.id)
+                      );
+                    }
+                    else{
+                      setSeleccionar([
+                        ...seleccionar,
+                        item.id
+                      ])
+                    }
+                  }}>
+                    { (seleccionar.includes(item.id))? <BsCircleFill/>:<BsCircle/> }
+                  </td>
+                  <td>{item.titulo}</td>
+                  <td>{item.editorial}</td>
+                  <td>{item.edicion}</td>
+                  <td>{item.genero}</td>
+                  <td>{item.autor}</td>
+                  <td>{item.idioma}</td>
+                  <td>{item.publicacion}</td>
+                  <td>
+                    <Button outline color="secondary" onClick={() => {
+                      consultarLibro(item.id);
+                      toggle(2);
+                    }}><BsFillPencilFill/></Button>
+                    <Button outline color="danger" onClick={() => {
+                      consultarLibro(item.id);
+                      toggle(3);
+                    }}><BsFillXCircleFill/></Button>
+                  </td>
+                </tr>
+              )
+            }
+            else{
+              if(
+                (""+item.titulo).includes(buscar) || 
+                (""+item.editorial).includes(buscar) || 
+                (""+item.edicion).includes(buscar) || 
+                (""+item.genero).includes(buscar) || 
+                (""+item.autor).includes(buscar) || 
+                (""+item.idioma).includes(buscar) || 
+                (""+item.publicacion).includes(buscar)){
                 return (
                   <tr key={item.id}>
-                    <td scope="row">
-                      <span className="circulo"></span>
+                    <td onClick={() => {
+                      if(seleccionar.includes(item.id)){
+                        setSeleccionar(
+                          seleccionar.filter((dato) => dato!=item.id)
+                        );
+                      }
+                      else{
+                        setSeleccionar([
+                          ...seleccionar,
+                          item.id
+                        ])
+                      }
+                    }}>
+                      { (seleccionar.includes(item.id))? <BsCircleFill/>:<BsCircle/> }
                     </td>
-                    <td scope="col">{item.titulo}</td>
-                    <td scope="col">{item.editorial}</td>
-                    <td scope="col">{item.genero}</td>
-                    <td scope="col">{item.autor}</td>
-                    <td scope="col">{item.idioma}</td>
-                    <td scope="col">{item.publicacion}</td>
-                    <td scope="col">{item.edicion}</td>
-                    <td scope="col">
-                      <div className="d-flex justify-content-center">
-                        <button className="btn btn-warning ms-1" data-bs-toggle="modal" data-bs-target="#modificar" onClick={() => { 
-                            consultarLibro(item.id);
-                          }}>
-                          <i className="bi bi-pencil-fill"></i> .
-                        </button>
-                        <button data-bs-toggle="modal" data-bs-target="#eliminar" className="btn btn-danger ms-1" onClick={() => { 
-                            setAuxiliar({id: item.id});
-                          }}>
-                          <i className="bi bi-trash-fill"></i> .
-                        </button>
-                      </div>
+                    <td>{item.titulo}</td>
+                    <td>{item.editorial}</td>
+                    <td>{item.edicion}</td>
+                    <td>{item.genero}</td>
+                    <td>{item.autor}</td>
+                    <td>{item.idioma}</td>
+                    <td>{item.publicacion}</td>
+                    <td>
+                      <Button outline color="secondary" onClick={() => {
+                        consultarLibro(item.id);
+                        toggle(2);
+                      }}><BsFillPencilFill/></Button>
+                      <Button outline color="danger" onClick={() => {
+                        consultarLibro(item.id);
+                        toggle(3);
+                      }}><BsFillXCircleFill/></Button>
                     </td>
                   </tr>
                 )
-              })
+              }
             }
-          </tbody>
-        </table>
-      </div>
+          })
+        }
+        </tbody>
+      </Table>
 
       {/* Modal 1*/}
-      <div className="modal fade" id="insertar" aria-labelledby="insertar" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="exampleModalLabel">Agregar Libro(s)</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              <div className="row row-cols-lg-auto g-3 align-items-center">
-                
-                <div className="col-12">
-                  <label className="form-label">Titulo</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="text" className="form-control" id="insertarTitulo" placeholder="Titulo"/>
-                  </div>
-                </div>
+      <Modal isOpen={modal==1} toggle={()=>toggle(1)}>
+        <ModalHeader toggle={() => toggle(1)} close={<BsXCircleFill onClick={() => toggle(1)} size={30}/>}>Insertar Libro(s)</ModalHeader>
+        <ModalBody>
+          <Button color="success" onClick={() => setLibros([...libros,new Libro()])}><BsPlusCircle/></Button>
+          <Button color="danger" onClick={() => 
+            setLibros(libros.filter((item,index) => index!=libros.length-1)
+          )}><BsDashCircle/></Button>
+          <h5>{ libros.length }</h5>
+          {
+            libros.map((item, index) => {
+              return (
+                <ListGroup>
+                  <ListGroupItem>
+                    <ListGroupItemHeading onClick={() => toggleLibros(index+1)}>Libro #{index+1}</ListGroupItemHeading>
+                    <Collapse isOpen={listLibros==index+1}>
+                      <Formulario onChange={({target}) => onChange(index,target)} index={index} libro={item}/>
+                    </Collapse>
+                  </ListGroupItem>
+                </ListGroup>
+              );
+            })
+          }
+        </ModalBody>
+        <ModalFooter>
+          <Button color="secondary" onClick={() => toggle(1)}>Cancelar</Button>
+          <Button color="success" onClick={() => {
+            toggle(1); 
+            crearLibros(libros)
+          }}>Guardar</Button>
+        </ModalFooter>
+      </Modal>
 
-                <div className="col-12">
-                  <label className="form-label">Editorial</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="text" className="form-control" id="insertarEditorial" placeholder="Editorial"/>
-                  </div>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Genero</label>
-                  <select className="form-select" id="insertarGenero">
-                    <option defaultValue>Seleccione uno ...</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-                  </select>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Autor</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="text" className="form-control" id="insertarAutor" placeholder="Autor"/>
-                  </div>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Idioma</label>
-                  <select className="form-select" id="insertarIdioma">
-                    <option defaultValue>Seleccione uno...</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-                  </select>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Publicación</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="text" className="form-control" id="insertarPublicacion" placeholder="Titulo"/>
-                  </div>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Edición</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="numbar" className="form-control" id="insertarEdicion" placeholder="Titulo"/>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => {
-                crearLibro(auxiliar);
-              }}>
-                Guardar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal 2 */}
-      <div className="modal fade" id="eliminar" aria-labelledby="eliminar" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="exampleModalLabel">Eliminar Libro(s)</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              ¿Esta seguro que quiere eliminar estos archivos?
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-danger" onClick={() => {
-                  borrarLibro(auxiliar.id)
-                  setAuxiliar(null);
-                }
-                } 
-                data-bs-dismiss="modal">Eliminar</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Modal 2*/}
+      <Modal isOpen={modal==2} toggle={() => toggle(2)}>
+        <ModalHeader toggle={() => toggle(2)} close={<BsXCircleFill onClick={() => toggle(2)} size={30}/>}>Modificar Libro</ModalHeader>
+        <ModalBody>
+          <Formulario onChange={({target}) => onChangeEdit(target)} libro={libro}/>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="secondary" onClick={() => toggle(2)}>Cancelar</Button>
+          <Button color="success" onClick={() => {
+            toggle(2); 
+            modificarLibro(libro);
+          }}>Guardar</Button>
+        </ModalFooter>
+      </Modal>
 
       {/* Modal 3*/}
-      <div className="modal fade" id="modificar" aria-labelledby="modificar" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="exampleModalLabel">Actualizar Libro</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              <div className="row row-cols-lg-auto g-3 align-items-center">
-                
-                <div className="col-12">
-                  <label className="form-label">Titulo</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="text" className="form-control" id="insertarTitulo" placeholder="Titulo"/>
-                  </div>
-                </div>
+      <Modal isOpen={modal==3} toggle={() => toggle(3)}>
+        <ModalHeader toggle={() => toggle(3)} close={<BsXCircleFill onClick={() => toggle(3)} size={30}/>}>Eliminar</ModalHeader>
+        <ModalBody>
+          <h4>¿Esta seguro que quiere eliminar este registro?</h4>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="secondary" onClick={() => toggle(3)}>Cancelar</Button>
+          <Button color="danger" onClick={() => {
+            toggle(3); 
+            borrarLibro(libro.id);
+          }}>Eliminar</Button>
+        </ModalFooter>
+      </Modal>
 
-                <div className="col-12">
-                  <label className="form-label">Editorial</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="text" className="form-control" id="insertarEditorial" placeholder="Editorial"/>
-                  </div>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Genero</label>
-                  <select className="form-select" id="insertarGenero">
-                    <option defaultValue>Seleccione uno ...</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-                  </select>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Autor</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="text" className="form-control" id="insertarAutor" placeholder="Autor"/>
-                  </div>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Idioma</label>
-                  <select className="form-select" id="insertarIdioma">
-                    <option defaultValue>Seleccione uno...</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-                  </select>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Publicación</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="text" className="form-control" id="insertarPublicacion" placeholder="Titulo"/>
-                  </div>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Edición</label>
-                  <div className="input-group">
-                    <div className="input-group-text">@</div>
-                    <input type="numbar" className="form-control" id="insertarEdicion" placeholder="Titulo"/>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => {
-                modificarLibro(auxiliar);
-              }}>
-                Guardar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      {/* Modal 4*/}
+      <Modal isOpen={modal==4} toggle={() => toggle(4)}>
+        <ModalHeader toggle={() => toggle(4)} close={<BsXCircleFill onClick={() => toggle(4)} size={30}/>}>Eliminar</ModalHeader>
+        <ModalBody>
+          <h4>¿Esta seguro que desea eliminarlo(s)?</h4>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="secondary" onClick={() => toggle(4)}>Cancelar</Button>
+          <Button color="danger" onClick={() => {
+            toggle(4); 
+            borrarLibros(seleccionar);
+          }}>Eliminar</Button>
+        </ModalFooter>
+      </Modal>
+      
     </div>
+  );
+
+}
+
+const Formulario = ({onChange, index, libro = new Libro()}) => {
+  return (
+    <Form>
+      <FormGroup>
+        <Label for="titulo">Titulo</Label>
+        <Input type="text" onChange={onChange} value={libro.titulo} name="titulo" id="titulo" placeholder="Titulo" />
+      </FormGroup>
+      <FormGroup>
+        <Label for="autor">autor</Label>
+        <Input type="text" onChange={onChange} value={libro.autor} name="autor" id="Autor" placeholder="Autor"/>
+      </FormGroup>
+      <Row form>
+        <Col md={6}>
+          <FormGroup>
+            <Label for="editorial">Editorial</Label>
+            <Input type="text" onChange={onChange} value={libro.editorial} name="editorial" id="editorial" placeholder="Editorial" />
+          </FormGroup>
+        </Col>
+        <Col md={6}>
+          <FormGroup>
+            <Label for="edicion">Edicion</Label>
+            <Input type="number" onChange={onChange} value={libro.edicion} name="edicion" id="edicion" placeholder="Edicion"/>
+          </FormGroup>
+        </Col>
+        <Col md={6}>
+          <FormGroup>
+            <Label for="genero">Genero</Label>
+            <Input type="number" onChange={onChange} value={libro.genero} name="genero" id="genero" placeholder="Genero"/>
+          </FormGroup>
+        </Col>
+        <Col md={6}>
+          <FormGroup>
+            <Label for="idioma">Idioma</Label>
+            <Input type="number" onChange={onChange} value={libro.idioma} name="idioma" id="idioma" placeholder="Idioma"/>
+          </FormGroup>
+        </Col>
+        <Col md={6}>
+          <FormGroup>
+            <Label for="publicacion">Publicación</Label>
+            <Input type="text" onChange={onChange} value={libro.publicacion} name="publicacion" id="publicacion" placeholder="Publicacion"/>
+          </FormGroup>  
+        </Col>
+      </Row>
+    </Form>
   );
 }
 
